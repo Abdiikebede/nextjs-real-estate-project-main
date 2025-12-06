@@ -1,0 +1,425 @@
+
+
+// import React, { useState, useEffect } from "react";
+// import {
+//     Table,
+//     TableHeader,
+//     TableColumn,
+//     TableBody,
+//     TableRow,
+//     TableCell,
+//     Input,
+//     Pagination,
+//     Dropdown,
+//     DropdownMenu,
+//     DropdownItem,
+// } from "@heroui/react";
+// import toast from "react-hot-toast";
+// import { useRouter } from "next/navigation";
+
+// type User = {
+//     id: string;
+//     firstName: string;
+//     lastName: string;
+//     email: string;
+//     skillLevel: string;
+//     hasDashboardAccess: boolean; // Add this property
+// };
+
+// export default function UserTable() {
+//     const [users, setUsers] = useState<User[]>([]);
+//     const [currentPage, setCurrentPage] = useState(1);
+//     const [totalPages, setTotalPages] = useState(1);
+//     const [search, setSearch] = useState("");
+//     const [loading, setLoading] = useState(false);
+
+//     const router = useRouter();
+
+//     const fetchUsers = async (page = 1, search = "") => {
+//         setLoading(true);
+//         try {
+//             const response = await fetch(`/api/users?page=${page}&search=${search}`);
+//             const data = await response.json();
+//             setUsers(data.users);
+//             setTotalPages(data.totalPages);
+//             setCurrentPage(data.currentPage);
+//         } catch (error) {
+//             toast.error("Failed to fetch users");
+//         } finally {
+//             setLoading(false);
+//         }
+//     };
+
+//     useEffect(() => {
+//         fetchUsers(currentPage, search);
+//     }, [currentPage, search]);
+
+//     const handleDelete = async (id: string) => {
+//         try {
+//             const response = await fetch(`/api/users?id=${id}`, { method: "DELETE" });
+//             const data = await response.json();
+
+//             if (response.ok) {
+//                 toast.success(data.message);
+//                 fetchUsers(currentPage, search); // Refresh users
+//             } else {
+//                 toast.error(data.error || "Failed to delete user");
+//             }
+//         } catch (error) {
+//             toast.error("Failed to delete user");
+//         }
+//     };
+
+//     const handleDashboardAccess = async (id: string) => {
+//         try {
+//             const response = await fetch(`/api/users/dashboard-access`, {
+//                 method: "POST",
+//                 headers: {
+//                     "Content-Type": "application/json",
+//                 },
+//                 body: JSON.stringify({ id }),
+//             });
+//             const data = await response.json();
+
+//             if (response.ok) {
+//                 toast.success(data.message);
+//                 fetchUsers(currentPage, search); // Refresh users
+//             } else {
+//                 toast.error(data.error || "Failed to update dashboard access");
+//             }
+//         } catch (error) {
+//             toast.error("Failed to update dashboard access");
+//         }
+//     };
+
+//     const renderCell = (user: User, columnKey: string) => {
+//         switch (columnKey) {
+//             case "name":
+//                 return `${user.firstName} ${user.lastName}`;
+//             case "email":
+//                 return user.email;
+//             case "skillLevel":
+//                 return user.skillLevel;
+//             case "actions":
+//                 return (
+//                     <Dropdown>
+//                         {[ // Wrap in an array
+//                             <DropdownMenu aria-label="Actions" key="menu">
+//                                 <DropdownItem
+//                                     key="dashboard"
+//                                     onClick={() => router.push(`/dashboard/${user.id}`)}
+//                                 >
+//                                     Give Dashboard Access
+//                                 </DropdownItem>
+//                                 <DropdownItem key="delete" onClick={() => handleDelete(user.id)}>
+//                                     Delete User
+//                                 </DropdownItem>
+//                             </DropdownMenu>,
+//                         ]}
+//                     </Dropdown>
+//                 );
+//             default:
+//                 return (user as any)[columnKey];
+//         }
+//     };
+
+//     return (
+//         <div className="p-4">
+//             <Input
+//                 placeholder="Search by name"
+//                 value={search}
+//                 onValueChange={(value) => setSearch(value)}
+//                 isClearable
+//                 className="mb-4"
+//             />
+
+//             {loading && <div className="text-center py-4">Loading...</div>}
+
+//             {!loading && (
+//                 <Table aria-label="User Table">
+//                     <TableHeader>
+//                         <TableColumn>ID</TableColumn>
+//                         <TableColumn>NAME</TableColumn>
+//                         <TableColumn>EMAIL</TableColumn>
+//                         <TableColumn>SKILL LEVEL</TableColumn>
+//                         <TableColumn>ACTIONS</TableColumn>
+//                     </TableHeader>
+//                     <TableBody>
+//                         {users.map((user) => (
+//                             <TableRow key={user.id}>
+//                                 {["id", "name", "email", "skillLevel", "actions"].map((columnKey) => (
+//                                     <TableCell key={columnKey}>{renderCell(user, columnKey)}</TableCell>
+//                                 ))}
+//                             </TableRow>
+//                         ))}
+//                     </TableBody>
+//                 </Table>
+//             )}
+
+//             <Pagination
+//                 page={currentPage}
+//                 total={totalPages}
+//                 onChange={(page) => setCurrentPage(page)}
+//             />
+//         </div>
+//     );
+// }
+
+// // userdetails end tsx
+
+// import { NextApiRequest, NextApiResponse } from "next";
+// import { db } from "@/server/db";
+// import { users } from "@/server/schema";
+// import { sql } from "drizzle-orm";
+
+
+// export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+//   if (req.method === "GET") {
+//     try {
+//       const { page = 1, search = "" } = req.query;
+//       const limit = 10; // Number of users per page
+//       const offset = (Number(page) - 1) * limit;
+
+//       // Fetch users with pagination and search
+
+//       const result = await db
+//         .select()
+//         .from(users)
+//         .where(sql`${users.firstName} ILIKE ${`%${search}%`}`)
+//         .offset(offset)
+//         .limit(limit);
+
+
+//       const totalUsers = await db
+//         .select({ count: sql<number>`COUNT(${users.id})` })
+//         .from(users);
+
+//       res.status(200).json({
+//         users: result,
+//         totalUsers: totalUsers[0].count,
+//         currentPage: Number(page),
+//         totalPages: Math.ceil(totalUsers[0].count / limit),
+//       });
+//     } catch (error) {
+//       console.error("Error fetching users:", error);
+//       res.status(500).json({ error: "Failed to fetch users" });
+//     }
+//   } else if (req.method === "DELETE") {
+//     try {
+//       const { id } = req.query;
+
+//       if (!id) {
+//         return res.status(400).json({ error: "User ID is required" });
+//       }
+
+//       await db
+//         .delete(users)
+//         .where(sql`${users.id} = ${id}`);
+
+//       res.status(200).json({ message: "User deleted successfully" });
+//     } catch (error) {
+//       console.error("Error deleting user:", error);
+//       res.status(500).json({ error: "Failed to delete user" });
+//     }
+//   } else {
+//     res.setHeader("Allow", ["GET", "DELETE"]);
+//     res.status(405).end(`Method ${req.method} Not Allowed`);
+//   }
+// }
+
+
+
+
+// // api of user
+
+// // hasDashboardAccess: boolean("hasDashboardAccess").default(false), // Add this column
+
+
+
+
+// export const properties = pgTable("properties", {
+//   id: serial("id").primaryKey(),
+//   zpid: varchar("zpid", { length: 50 }).unique().notNull(), // Zillow Property ID
+//   title: varchar("title", { length: 255 }).notNull(),
+//   description: text("description").notNull(),
+//   price: integer("price").notNull(),
+//   location: varchar("location", { length: 255 }).notNull(),
+//   imageUrl: varchar("image_url", { length: 500 }).notNull(),
+//   bedrooms: integer("bedrooms").notNull(),
+//   bathrooms: integer("bathrooms").notNull(),
+//   sqft: integer("sqft").notNull(),
+//   propertyType: varchar("property_type", { length: 255 }).notNull(),
+//   isForSale: boolean("is_for_sale").notNull().default(true),
+//   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+// });
+
+// export const propertyDetails = pgTable("property_details", {
+//   id: serial("id").primaryKey(),
+//   walkScore: integer("walk_score"),
+//   transitScore: integer("transit_score"),
+//   bikeScore: integer("bike_score"),
+//   yearBuilt: integer("year_built"),
+//   taxHistory: jsonb("tax_history"), // Store tax history as JSON
+//   priceHistory: jsonb("price_history"), // Store price history as JSON
+//   zestimate: integer("zestimate"), // Zestimate Value
+//   rentalEstimate: integer("rental_estimate"), // Rent Zestimate
+//   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+// });
+
+// export const propertyImages = pgTable("property_images", {
+//   id: serial("id").primaryKey(),
+//   imageUrl: varchar("image_url", { length: 500 }).notNull(),
+//   type: varchar("type", { length: 50 }), // e.g., image, video
+//   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+// });
+
+// import {
+//     pgTable,
+//     text,
+//     jsonb,
+//     pgEnum,
+//     serial,
+//     timestamp,
+//     integer,
+//     varchar,
+//     boolean, // Ensure boolean is imported
+//   } from "drizzle-orm/pg-core";
+  
+//   export const SkillLevelEnum = pgEnum("skill_level", [
+//     "Buyer", "Seller", "Advanced", "Expert", "Master",
+//   ]);
+  
+//   export const users = pgTable("user", {
+//     id: text("id")
+//       .primaryKey()
+//       .$defaultFn(() => crypto.randomUUID()),
+//     firstName: text("firstName"),
+//     lastName: text("lastName"),
+//     location: text("location"),
+//     email: text("email").notNull(),
+//     image: text("image").default("no-image"),
+//     password: text("password"),
+//     skillLevel: SkillLevelEnum("skill_level").notNull().default("Buyer"),
+//   })
+  
+  
+//   // Enums for specific fields
+//   export const HomeTypeEnum = pgEnum("home_type", ["Single family", "Condo", "Townhouse", "Apartment"]);
+//   export const CoolingTypeEnum = pgEnum("cooling_type", ["Central", "Evaporative", "Geothermal", "Refrigeration", "Solar", "Wall", "Other", "None"]);
+//   export const HeatingTypeEnum = pgEnum("heating_type", ["Baseboard", "Forced air", "Geothermal", "Heat pump", "Radiant", "Stove", "Wall", "Other"]);
+//   export const HeatingFuelEnum = pgEnum("heating_fuel", ["Coal", "Electric", "Gas", "Oil", "Propane / Butane", "Solar", "Wood / Pellet", "Other", "None"]);
+//   export const BasementTypeEnum = pgEnum("basement", ["Finished", "Partially finished", "Unfinished", "None"]);
+//   export const ArchitecturalStyleEnum = pgEnum("architectural_style", [
+//     "Bungalow",
+//     "Cape Cod",
+//     "Colonial",
+//     "Contemporary",
+//     "Craftsman",
+//     "French",
+//     "Georgian",
+//     "Loft",
+//     "Modern",
+//     "Queen Anne / Victorian",
+//     "Ranch / Rambler",
+//     "Santa Fe / Pueblo Style",
+//     "Spanish",
+//     "Split-level",
+//     "Tudor",
+//     "Other",
+//   ]);
+  
+//   // Main properties table
+//   export const properties = pgTable("properties", {
+//     id: serial("id").primaryKey(),
+//     title: varchar("title", { length: 255 }).notNull(),
+//     description: varchar("description", { length: 5000 }).notNull(),
+//     price: integer("price").notNull(),
+//     location: varchar("location", { length: 255 }).notNull(),
+//     homeType: HomeTypeEnum("home_type").notNull(),
+//     bedrooms: integer("bedrooms").notNull(),
+//     bathrooms: integer("bathrooms").notNull(),
+//     sqft: integer("sqft").notNull(),
+//     lotSize: integer("lot_size"), // Optional
+//     yearBuilt: integer("year_built"),
+//     remodelYear: integer("remodel_year"),
+//     hoaDues: integer("hoa_dues"),
+//     isForSale: boolean("is_for_sale").notNull().default(true),
+//     phoneNumber: varchar("phone_number", { length: 20 }),
+//     agreement: boolean("agreement").default(false).notNull(),
+//     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+//     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+//     coolingType: CoolingTypeEnum("cooling_type"),
+//     heatingType: HeatingTypeEnum("heating_type"),
+//     heatingFuel: HeatingFuelEnum("heating_fuel"),
+//     basement: BasementTypeEnum("basement"),
+//     architecturalStyle: ArchitecturalStyleEnum("architectural_style"),
+//     totalRooms: integer("total_rooms"),
+//     indoorFeatures: jsonb("indoor_features"), // Store as a JSON array for flexibility
+//     buildingAmenities: jsonb("building_amenities"),
+//     exterior: jsonb("exterior"),
+//     outdoorAmenities: jsonb("outdoor_amenities"),
+//     parking: jsonb("parking"),
+//     parkingSpaces: integer("parking_spaces"),
+//     roof: jsonb("roof"),
+//     view: jsonb("view"),
+//     appliances: jsonb("appliances"),
+//     date: timestamp("date", { withTimezone: true }).notNull(),
+//     startTime: varchar("start_time", { length: 10 }).notNull(), // Time stored as string
+//     endTime: varchar("end_time", { length: 10 }).notNull(),
+//     walkScore: integer("walk_score"),
+//     transitScore: integer("transit_score"),
+//     bikeScore: integer("bike_score"),
+//     score: integer("score"), // Add this field
+//   });
+  
+//   // Utility Details
+//   export const propertyDetails = pgTable("property_details", {
+//     id: serial("id").primaryKey(),
+//     propertyId: integer("property_id").references(() => properties.id).notNull(),
+//     coolingType: CoolingTypeEnum("cooling_type"),
+//     heatingType: HeatingTypeEnum("heating_type"),
+//     heatingFuel: HeatingFuelEnum("heating_fuel"),
+//     basement: BasementTypeEnum("basement"),
+//     architecturalStyle: ArchitecturalStyleEnum("architectural_style"),
+//     totalRooms: integer("total_rooms"),
+//     indoorFeatures: jsonb("indoor_features"), // Store as a JSON array for flexibility
+//     buildingAmenities: jsonb("building_amenities"),
+//     exterior: jsonb("exterior"),
+//     outdoorAmenities: jsonb("outdoor_amenities"),
+//     parking: jsonb("parking"),
+//     parkingSpaces: integer("parking_spaces"),
+//     roof: jsonb("roof"),
+//     view: jsonb("view"),
+//     appliances: jsonb("appliances"),
+    
+//   });
+  
+//   // Open Houses Table (for many-to-one relation with properties)
+//   export const openHouses = pgTable("open_houses", {
+//     id: serial("id").primaryKey(),
+//     propertyId: integer("property_id").references(() => properties.id).notNull(),
+//     date: timestamp("date", { withTimezone: true }).notNull(),
+//     startTime: varchar("start_time", { length: 10 }).notNull(), // Time stored as string
+//     endTime: varchar("end_time", { length: 10 }).notNull(),
+//   });
+  
+//   // Property Images
+//   export const propertyImages = pgTable("property_images", {
+//     id: serial("id").primaryKey(),
+//     propertyId: integer("property_id").references(() => properties.id).notNull(),
+//     imageUrl: varchar("image_url", { length: 500 }).notNull(),
+//     type: varchar("type", { length: 50 }), // image/video
+//     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+//   });
+  
+//   // Walk, Transit, and Bike Scores
+//   export const propertyScores = pgTable("property_scores", {
+//     id: serial("id").primaryKey(),
+//     propertyId: integer("property_id").references(() => properties.id).notNull(),
+//     walkScore: integer("walk_score"),
+//     transitScore: integer("transit_score"),
+//     bikeScore: integer("bike_score"),
+//     score: integer("score"), // Add this field
+//   });
+  
+  

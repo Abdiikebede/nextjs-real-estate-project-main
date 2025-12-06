@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+.avatar svg {
+  stroke: white;
+}
+
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+
+.custom-dropdown-menu {
+  margin: 0;
+  padding: 0;
+  box-shadow: none;
+  /* Optional: Remove default shadow if present */
+  border: none;
+  /* Optional: Adjust border if necessary */
+}
+
+/* globals.css */
+.prose {
+  max-width: 65ch;
+  line-height: 1.6;
+}
+
+.prose ul {
+  list-style-type: disc;
+  margin-left: 1.5rem;
+}
+
+/* Text glow effects */
+.text-glow {
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.8),
+               0 0 20px rgba(255, 255, 255, 0.6),
+               0 0 30px rgba(255, 255, 255, 0.4);
+  font-weight: bold;
+}
+
+.text-glow-blue {
+  text-shadow: 0 0 10px rgba(59, 130, 246, 0.8),
+               0 0 20px rgba(59, 130, 246, 0.6),
+               0 0 30px rgba(59, 130, 246, 0.4);
+  font-weight: bold;
+}
+
+/* Light blue gradient glow effect */
+.blue-glow-container {
+  position: relative;
+  padding: 20px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(5px);
+  box-shadow: 0 0 15px rgba(135, 206, 235, 0.5),
+              0 0 30px rgba(135, 206, 235, 0.3),
+              0 0 45px rgba(135, 206, 235, 0.2);
+  border: 1px solid rgba(135, 206, 235, 0.3);
+  animation: pulse 3s infinite alternate;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 15px rgba(135, 206, 235, 0.5),
+                0 0 30px rgba(135, 206, 235, 0.3),
+                0 0 45px rgba(135, 206, 235, 0.2);
+  }
+  100% {
+    box-shadow: 0 0 20px rgba(135, 206, 235, 0.6),
+                0 0 40px rgba(135, 206, 235, 0.4),
+                0 0 60px rgba(135, 206, 235, 0.3);
+  }
+}
